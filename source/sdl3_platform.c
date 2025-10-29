@@ -3,32 +3,36 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-const char* program_name = "tactile";
+const char* ProgramName = "tactile";
 
-int32 string_compare(const char* string_a, const char* string_b)
+int32 StringCompare(const char* StringA, const char* StringB)
 {
-    if (string_a == NULL || string_b == NULL)
+    if (StringA == NULL || StringB == NULL)
     {
         __builtin_debugtrap();
         __builtin_abort();
     }
 
-    return __builtin_strcmp(string_a, string_b);
+    return __builtin_strcmp(StringA, StringB);
 }
 
-int32 main(int32 argc, const char8* argv[])
+int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 {
     //
     // Parse Commandline
     //
 
-    bool8 window_fullscreen = false;
+    bool8 WindowFullscreen = false;
 
-    for (int32 arg_index = 0; arg_index < argc; ++arg_index)
+    for (int32 Index = 0; Index < ArgumentCount; ++Index)
     {
-        if (string_compare("-fullscreen", argv[arg_index]) == 0)
+        if (StringCompare("-fullscreen", ArgumentValues[Index]) == 0)
         {
-            window_fullscreen = true;
+            WindowFullscreen = true;
+        }
+        else
+        {
+            //TODO: Handle unrecognised arguments
         }
     }
 
@@ -41,27 +45,27 @@ int32 main(int32 argc, const char8* argv[])
         goto sdl_fatal_error;
     }
 
-    int32 window_width = 800;
-    int32 window_height = 600;
+    int32 WindowWidth = 800;
+    int32 WindowHeight = 600;
 
-    int32 window_flags = 0;
-    window_flags |= window_fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+    int32 WindowFlags = 0;
+    WindowFlags |= WindowFullscreen ? SDL_WINDOW_FULLSCREEN : 0;
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    SDL_Window* Window;
+    SDL_Renderer* Renderer;
 
-    if (!SDL_CreateWindowAndRenderer(program_name, window_width, window_height, window_flags, &window, &renderer))
+    if (!SDL_CreateWindowAndRenderer(ProgramName, WindowWidth, WindowHeight, WindowFlags, &Window, &Renderer))
     {
         goto sdl_fatal_error;
     }
 
-    if (!SDL_GetWindowSize(window, &window_width, &window_height))
+    if (!SDL_GetWindowSize(Window, &WindowWidth, &WindowHeight))
     {
         goto sdl_fatal_error;
     }
 
     //
-    // TODO: Main loop
+    // Main loop
     //
 
     bool8 is_running = true;
@@ -87,9 +91,9 @@ int32 main(int32 argc, const char8* argv[])
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-        SDL_RenderPresent(renderer);
+        SDL_SetRenderDrawColor(Renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(Renderer);
+        SDL_RenderPresent(Renderer);
     }
 
 exit_program:
@@ -97,7 +101,7 @@ exit_program:
     return 0;
 
 sdl_fatal_error:
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, program_name, SDL_GetError(), NULL);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
     goto exit_program;
 }
 
