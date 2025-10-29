@@ -68,24 +68,24 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     // Main loop
     //
 
-    bool8 is_running = true;
-    while (is_running)
+    bool8 IsRunning = true;
+    while (IsRunning)
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        SDL_Event Event;
+        while (SDL_PollEvent(&Event))
         {
-            switch (event.type)
+            switch (Event.type)
             {
                 case SDL_EVENT_QUIT:
                 {
-                    is_running = false;
+                    IsRunning = false;
                 } break;
 
                 case SDL_EVENT_KEY_UP:
                 {
-                    if (event.key.key == SDLK_ESCAPE)
+                    if (Event.key.key == SDLK_ESCAPE)
                     {
-                        is_running = false;
+                        IsRunning = false;
                     }
                 } break;
             }
