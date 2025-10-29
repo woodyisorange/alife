@@ -1,0 +1,7 @@
+-std=c11
+-Wall
+-Wextra
+-Werror
+--include-directory=../third-party/sdl3/include
+--library-directory=../third-party/sdl3/binaries/linux64
+-lSDL3
