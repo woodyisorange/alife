@@ -5,14 +5,18 @@
 
 const char* ProgramName = "tactile";
 
-int32 StringCompare(const char* StringA, const char* StringB)
-{
-    if (StringA == NULL || StringB == NULL)
-    {
-        __builtin_debugtrap();
-        __builtin_abort();
+#define ASSERT(Expression) \
+    { \
+        if (!(Expression)) \
+        { \
+            __builtin_debugtrap(); \
+            __builtin_abort(); \
+        } \
     }
 
+int32 StringCompare(const char* StringA, const char* StringB)
+{
+    ASSERT(StringA != NULL && StringB != NULL);
     return __builtin_strcmp(StringA, StringB);
 }
 
@@ -22,13 +26,13 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     // Parse Commandline
     //
 
-    bool8 WindowFullscreen = false;
+    bool8 WindowFullscreen = true;
 
     for (int32 Index = 0; Index < ArgumentCount; ++Index)
     {
-        if (StringCompare("-fullscreen", ArgumentValues[Index]) == 0)
+        if (StringCompare("-windowed", ArgumentValues[Index]) == 0)
         {
-            WindowFullscreen = true;
+            WindowFullscreen = false;
         }
         else
         {
@@ -49,7 +53,7 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     int32 WindowHeight = 600;
 
     int32 WindowFlags = 0;
-    WindowFlags |= WindowFullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+    WindowFlags |= WindowFullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE;
 
     SDL_Window* Window;
     SDL_Renderer* Renderer;
