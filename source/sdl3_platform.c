@@ -64,7 +64,33 @@ int32 main(int32 argc, const char8* argv[])
     // TODO: Main loop
     //
 
-    SDL_Delay(5000);
+    bool8 is_running = true;
+    while (is_running)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+                case SDL_EVENT_QUIT:
+                {
+                    is_running = false;
+                } break;
+
+                case SDL_EVENT_KEY_UP:
+                {
+                    if (event.key.key == SDLK_ESCAPE)
+                    {
+                        is_running = false;
+                    }
+                } break;
+            }
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+    }
 
 exit_program:
     SDL_Quit();
