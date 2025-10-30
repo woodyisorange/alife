@@ -5,12 +5,27 @@
 
 const char* ProgramName = "tactile";
 
+struct
+{
+    SDL_DateTime CurrentDateTime;
+    uint64 CurrentTicks;
+} PlatformGlobals;
+
 #define INNER_AS_STRING(X) #X
 #define AS_STRING(X) INNER_AS_STRING(X)
 
 #define LOG_MESSAGE(Format, ...) \
 { \
-    SDL_Log("[" __FILE__ ":" AS_STRING(__LINE__) "] " Format __VA_OPT__(,) __VA_ARGS__); \
+    SDL_Log( \
+        "[%04d-%02d-%02d-%02d:%02d:%02d.%03d][" __FILE__ ":" AS_STRING(__LINE__) "] " Format, \
+        PlatformGlobals.CurrentDateTime.year, \
+        PlatformGlobals.CurrentDateTime.month, \
+        PlatformGlobals.CurrentDateTime.day, \
+        PlatformGlobals.CurrentDateTime.hour, \
+        PlatformGlobals.CurrentDateTime.minute, \
+        PlatformGlobals.CurrentDateTime.second, \
+        (PlatformGlobals.CurrentDateTime.nanosecond / 1000000) \
+        __VA_OPT__(,) __VA_ARGS__); \
 }
 
 #define ASSERT(Expression) \
@@ -26,10 +41,15 @@ int32 StringCompare(const char* StringA, const char* StringB)
 {
     ASSERT(StringA != NULL && StringB != NULL);
     return __builtin_strcmp(StringA, StringB);
+
 }
 
 int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 {
+    SDL_Time CurrentTime;
+    SDL_GetCurrentTime(&CurrentTime);
+    SDL_TimeToDateTime(CurrentTime, &PlatformGlobals.CurrentDateTime, /*LocalTime*/true);
+
     LOG_MESSAGE("Starting %s", ProgramName);
 
     //
@@ -86,9 +106,15 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     // Main loop
     //
 
+    int64 TargetNanosecondsPerFrame = 166666666;
+
     bool8 IsRunning = true;
+    int64 CurrentNanoseconds = SDL_GetTicksNS();
     while (IsRunning)
     {
+        SDL_GetCurrentTime(&CurrentTime);
+        SDL_TimeToDateTime(CurrentTime, &PlatformGlobals.CurrentDateTime, /*LocalTime*/true);
+
         SDL_Event Event;
         while (SDL_PollEvent(&Event))
         {
@@ -112,6 +138,15 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
         SDL_SetRenderDrawColor(Renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(Renderer);
         SDL_RenderPresent(Renderer);
+
+        int64 NewNanoseconds = SDL_GetTicksNS();
+        int64 FrameDurationNanoseconds = NewNanoseconds - CurrentNanoseconds;
+
+        int64 NanosecondsToEndOfFrame = TargetNanosecondsPerFrame - FrameDurationNanoseconds;
+        if (NanosecondsToEndOfFrame > 0)
+        {
+            SDL_DelayPrecise(NanosecondsToEndOfFrame);
+        }
     }
 
 exit_program:
