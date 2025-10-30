@@ -5,6 +5,14 @@
 
 const char* ProgramName = "tactile";
 
+#define INNER_AS_STRING(X) #X
+#define AS_STRING(X) INNER_AS_STRING(X)
+
+#define LOG_MESSAGE(Format, ...) \
+{ \
+    SDL_Log("[" __FILE__ ":" AS_STRING(__LINE__) "] " Format __VA_OPT__(,) __VA_ARGS__); \
+}
+
 #define ASSERT(Expression) \
     { \
         if (!(Expression)) \
@@ -22,6 +30,8 @@ int32 StringCompare(const char* StringA, const char* StringB)
 
 int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 {
+    LOG_MESSAGE("Starting %s", ProgramName);
+
     //
     // Parse Commandline
     //
@@ -48,6 +58,10 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     {
         goto sdl_fatal_error;
     }
+
+    //
+    // Setup window
+    //
 
     int32 WindowWidth = 800;
     int32 WindowHeight = 600;
