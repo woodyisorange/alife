@@ -1,5 +1,7 @@
 #include "platform.h"
 
+#include <stdio.h>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
@@ -8,11 +10,37 @@ const char* ProgramName = "tactile";
 struct
 {
     SDL_DateTime CurrentDateTime;
-    uint64 CurrentTicks;
 } PlatformGlobals;
 
 #define INNER_AS_STRING(X) #X
 #define AS_STRING(X) INNER_AS_STRING(X)
+
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
+
+#define ENSURE(Expression) \
+    { \
+        if (!(Expression)) \
+        { \
+            __builtin_debugtrap(); \
+            __builtin_abort(); \
+        } \
+    }
+
+int64 FormatString(char8* Destination, int64 DestinationSize, char8* Format, ...)
+{
+    if (Destination == NULL || DestinationSize <= 0)
+    {
+        return 0;
+    }
+
+    va_list Arguments;
+    va_start(Arguments, Format);
+
+    int32 Length = vsprintf(Destination, Format, Arguments);
+
+    ENSURE(Length >= 0 && Length <= DestinationSize);
+    return Length;
+}
 
 #define LOG_MESSAGE(Format, ...) \
 { \
@@ -28,20 +56,10 @@ struct
         __VA_OPT__(,) __VA_ARGS__); \
 }
 
-#define ASSERT(Expression) \
-    { \
-        if (!(Expression)) \
-        { \
-            __builtin_debugtrap(); \
-            __builtin_abort(); \
-        } \
-    }
-
 int32 StringCompare(const char* StringA, const char* StringB)
 {
-    ASSERT(StringA != NULL && StringB != NULL);
+    ENSURE(StringA != NULL && StringB != NULL);
     return __builtin_strcmp(StringA, StringB);
-
 }
 
 int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
@@ -106,7 +124,7 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     // Main loop
     //
 
-    int64 TargetNanosecondsPerFrame = 166666666;
+    int64 TargetFrameDurationNanoseconds = 16666666;
 
     bool8 IsRunning = true;
     int64 CurrentNanoseconds = SDL_GetTicksNS();
@@ -141,8 +159,19 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 
         int64 NewNanoseconds = SDL_GetTicksNS();
         int64 FrameDurationNanoseconds = NewNanoseconds - CurrentNanoseconds;
+        CurrentNanoseconds = NewNanoseconds;
 
-        int64 NanosecondsToEndOfFrame = TargetNanosecondsPerFrame - FrameDurationNanoseconds;
+        int64 TotalFrameDurationNanoseconds = MAX(FrameDurationNanoseconds, TargetFrameDurationNanoseconds);
+
+        float32 FrameDurationMilliseconds = (float32)FrameDurationNanoseconds / 1000000.0f;
+        float32 TotalFrameDurationMilliseconds = (float32)TotalFrameDurationNanoseconds / 1000000.0f;
+        float32 FrameRate = 1000.0f / TotalFrameDurationMilliseconds;
+
+        char8 WindowTitle[256];
+        FormatString(WindowTitle, sizeof(WindowTitle), "%s (Game: %04.1f ms | Frame: %04.1f ms | FPS: %04.1f)", ProgramName, FrameDurationMilliseconds, TotalFrameDurationMilliseconds, FrameRate);
+        SDL_SetWindowTitle(Window, WindowTitle);
+
+        int64 NanosecondsToEndOfFrame = TargetFrameDurationNanoseconds - FrameDurationNanoseconds;
         if (NanosecondsToEndOfFrame > 0)
         {
             SDL_DelayPrecise(NanosecondsToEndOfFrame);
