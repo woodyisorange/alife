@@ -2,6 +2,6 @@
 -Wall
 -Wextra
 -Werror
---include-directory=../third-party/sdl3/include
---library-directory=../third-party/sdl3/binaries/linux64
+--include-directory=../third-party/sdl-3.2.24/include
+--library-directory=../third-party/sdl-3.2.24/binaries/linux64
 -lSDL3
