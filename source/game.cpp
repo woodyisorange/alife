@@ -1,5 +1,13 @@
 #include "game.h"
 
+struct rgba32
+{
+    uint8 Red;
+    uint8 Green;
+    uint8 Blue;
+    uint8 Alpha;
+};
+
 struct vector2f
 {
     float32 X;
@@ -101,16 +109,6 @@ vector2f Normalise(vector2f A)
     return Result;
 }
 
-void Game_SetPixel(void* BackBufferPixels, int32 BackBufferWidth, int32 BackBufferHeight, int32 BackBufferPitch, int32 X, int32 Y, uint8 Red, uint8 Green, uint8 Blue, uint8 Alpha)
-{
-    if (X >= 0 && X < BackBufferWidth && Y >= 0 && Y < BackBufferHeight)
-    {
-        uint8* BackBufferRow = (uint8*)BackBufferPixels + (BackBufferPitch * Y);
-        uint32* Pixel = (uint32*)(BackBufferRow + (4 * X));
-        *Pixel = (Alpha << 24) | (Blue << 16) | (Green << 8) | (Red << 0);
-    }
-}
-
 float32 Min(float32 A, float32 B)
 {
     return (A < B) ? A : B;
@@ -135,10 +133,26 @@ vector2f Clamp(vector2f Value, vector2f MinValue, vector2f MaxValue)
     return Result;
 }
 
-void Game_DrawLine(vector2f Start, vector2f End, void* BackBufferPixels, int32 BackBufferWidth, int32 BackBufferHeight, int32 BackBufferPitch, uint8 Red, uint8 Green, uint8 Blue, uint8 Alpha)
+void Game_SetPixel(bitmap* BackBuffer, rgba32 Colour, int32 X, int32 Y)
 {
-    vector2f ClampedStart = Clamp(Start, vector2f{ 0.0f, 0.0f }, vector2f{ (float32)BackBufferWidth, (float32)BackBufferHeight });
-    vector2f ClampedEnd = Clamp(Start, vector2f{ 0.0f, 0.0f }, vector2f{ (float32)BackBufferWidth, (float32)BackBufferHeight });
+    //TODO asserts/ensures
+    if (BackBuffer->PixelFormat != PIXEL_FORMAT_ARGB8888)
+    {
+        __builtin_abort();
+    }
+
+    if (X >= 0 && X < BackBuffer->Width && Y >= 0 && Y < BackBuffer->Height)
+    {
+        uint8* BackBufferRow = (uint8*)BackBuffer->Pixels + (BackBuffer->Pitch * Y);
+        rgba32* Pixel = (rgba32*)(BackBufferRow + (4 * X));
+        *Pixel = Colour;
+    }
+}
+
+void Game_DrawLine(bitmap* BackBuffer, rgba32 Colour, vector2f Start, vector2f End)
+{
+    vector2f ClampedStart = Clamp(Start, vector2f{ 0.0f, 0.0f }, vector2f{ (float32)BackBuffer->Width, (float32)BackBuffer->Height });
+    vector2f ClampedEnd = Clamp(End, vector2f{ 0.0f, 0.0f }, vector2f{ (float32)BackBuffer->Width, (float32)BackBuffer->Height });
     vector2f Line = ClampedEnd - ClampedStart;
     float32 LineLength = Length(Line);
     vector2f Step = (LineLength > 0.0f) ? (Line / LineLength) : Line;
@@ -146,37 +160,39 @@ void Game_DrawLine(vector2f Start, vector2f End, void* BackBufferPixels, int32 B
     vector2f Point = Start;
     for (int32 Steps = LineLength; Steps >= 0; --Steps)
     {
-        Game_SetPixel(BackBufferPixels, BackBufferWidth, BackBufferHeight, BackBufferPitch, Point.X, Point.Y, Red, Green, Blue, Alpha);
+        Game_SetPixel(BackBuffer, Colour, Point.X, Point.Y);
         Point += Step;
     }
 }
 
-void Game_UpdateAndRender(void* BackBufferPixels, int32 BackBufferWidth, int32 BackBufferHeight, int32 BackBufferPitch)
+void Game_UpdateAndRender(bitmap* BackBuffer)
 {
-    uint8* BackBufferRow = (uint8*)BackBufferPixels;
-
-    for (int32 Y = 0; Y < BackBufferHeight; ++Y)
+    //TODO asserts/ensures
+    if (BackBuffer->PixelFormat != PIXEL_FORMAT_ARGB8888)
     {
-        for (int32 X = 0; X < BackBufferWidth; ++X)
-        {
-            uint8* Red = BackBufferRow + (4 * X);
-            uint8* Green = Red + 1;
-            uint8* Blue = Red + 2;
-            uint8* Alpha = Red + 3;
-
-            *Alpha = 255;
-            *Red = 0;
-            *Green = 0;
-            *Blue = 0;
-        }
-        BackBufferRow += BackBufferPitch;
+        __builtin_abort();
     }
 
-    vector2f A = { BackBufferWidth * 0.5f, BackBufferHeight * 0.25f };
-    vector2f B = { BackBufferWidth * 0.75f, BackBufferHeight * 0.75f };
-    vector2f C = { BackBufferWidth * 0.25f, BackBufferHeight * 0.75f };
-    Game_DrawLine(A, B, BackBufferPixels, BackBufferWidth, BackBufferHeight, BackBufferPitch, 255, 0, 0, 255);
-    Game_DrawLine(B, C, BackBufferPixels, BackBufferWidth, BackBufferHeight, BackBufferPitch, 255, 0, 0, 255);
-    Game_DrawLine(C, A, BackBufferPixels, BackBufferWidth, BackBufferHeight, BackBufferPitch, 255, 0, 0, 255);
+    uint8* BackBufferRow = (uint8*)BackBuffer->Pixels;
+    rgba32 ClearColour = { 0, 0, 0, 255 };
+    for (int32 Y = 0; Y < BackBuffer->Height; ++Y)
+    {
+        for (int32 X = 0; X < BackBuffer->Width; ++X)
+        {
+            rgba32* Pixel = (rgba32*)(BackBufferRow + (4 * X));
+            *Pixel = ClearColour;
+        }
+        BackBufferRow += BackBuffer->Pitch;
+    }
+
+    vector2f A = { BackBuffer->Width * 0.5f, BackBuffer->Height * 0.25f };
+    vector2f B = { BackBuffer->Width * 0.75f, BackBuffer->Height * 0.75f };
+    vector2f C = { BackBuffer->Width * 0.25f, BackBuffer->Height * 0.75f };
+
+    rgba32 Colour = { 255, 0, 0, 255 };
+
+    Game_DrawLine(BackBuffer, Colour, A, B);
+    Game_DrawLine(BackBuffer, Colour, B, C);
+    Game_DrawLine(BackBuffer, Colour, C, A);
 }
 

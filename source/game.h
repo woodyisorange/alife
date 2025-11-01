@@ -1,4 +1,19 @@
 #pragma once
 #include "common.h"
 
-void Game_UpdateAndRender(void* BackBufferPixels, int32 BackBufferWidth, int32 BackBufferHeight, int32 BackBufferPitch);
+enum pixel_format
+{
+    PIXEL_FORMAT_ARGB8888
+};
+
+struct bitmap
+{
+    pixel_format PixelFormat;
+    int32 Width;
+    int32 Height;
+    int32 Pitch;
+    void* Pixels;
+};
+
+void Game_UpdateAndRender(bitmap* BackBuffer);
+

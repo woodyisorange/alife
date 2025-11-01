@@ -196,15 +196,17 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
             }
         }
 
-        void* BackBufferPixels;
-        int32 BackBufferPitch;
-        SDL_LockTexture(BackBuffer, NULL, &BackBufferPixels, &BackBufferPitch);
-
         //
         // Draw Frame
         //
 
-        Game_UpdateAndRender(BackBufferPixels, BackBufferWidth, BackBufferHeight, BackBufferPitch);
+        bitmap GameBackBuffer;
+        GameBackBuffer.PixelFormat = PIXEL_FORMAT_ARGB8888;
+        GameBackBuffer.Width = BackBufferWidth;
+        GameBackBuffer.Height = BackBufferHeight;
+        SDL_LockTexture(BackBuffer, NULL, &GameBackBuffer.Pixels, &GameBackBuffer.Pitch);
+
+        Game_UpdateAndRender(&GameBackBuffer);
 
         //
         // Finalise Frame
