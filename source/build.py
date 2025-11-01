@@ -3,11 +3,11 @@ import os
 import subprocess
 
 output_path = "../binaries"
-compiler = ["clang"]
+compiler = ["clang++"]
 debug_compile_flags = ["-g", "-Og"]
 release_compile_flags = ["-O3"]
 extra_compile_flags = [] # loaded from compile_flags.txt
-compile_arguments = ["-o", f"{output_path}/tactile.elf", "sdl3_platform.c"]
+compile_arguments = ["-o", f"{output_path}/tactile.elf", "sdl3_platform.cpp"]
 link_arguments = ["-lm", "-lSDL3"]
 
 args_parser = argparse.ArgumentParser()

@@ -6,9 +6,7 @@
 
 #include <stdint.h>
 
-typedef _Bool bool8;
-#define false 0
-#define true 1
+typedef bool bool8;
 
 typedef char char8;
 

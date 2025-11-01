@@ -26,7 +26,7 @@ struct
         } \
     }
 
-int64 FormatString(char8* Destination, int64 DestinationSize, char8* Format, ...)
+int64 FormatString(char8* Destination, int64 DestinationSize, const char8* Format, ...)
 {
     if (Destination == NULL || DestinationSize <= 0)
     {
@@ -94,7 +94,9 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        goto sdl_fatal_error;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+        SDL_Quit();
+        __builtin_abort();
     }
 
     //
@@ -112,12 +114,16 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 
     if (!SDL_CreateWindowAndRenderer(ProgramName, WindowWidth, WindowHeight, WindowFlags, &Window, &Renderer))
     {
-        goto sdl_fatal_error;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+        SDL_Quit();
+        __builtin_abort();
     }
 
     if (!SDL_GetWindowSize(Window, &WindowWidth, &WindowHeight))
     {
-        goto sdl_fatal_error;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+        SDL_Quit();
+        __builtin_abort();
     }
 
     //
@@ -153,8 +159,10 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
             }
         }
 
+        // Finalise Frame
         SDL_SetRenderDrawColor(Renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(Renderer);
+
         SDL_RenderPresent(Renderer);
 
         int64 NewNanoseconds = SDL_GetTicksNS();
@@ -178,12 +186,7 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
         }
     }
 
-exit_program:
     SDL_Quit();
     return 0;
-
-sdl_fatal_error:
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
-    goto exit_program;
 }
 
