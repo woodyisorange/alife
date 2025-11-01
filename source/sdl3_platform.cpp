@@ -119,7 +119,17 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
         __builtin_abort();
     }
 
-    if (!SDL_GetWindowSize(Window, &WindowWidth, &WindowHeight))
+    if (!SDL_GetRenderOutputSize(Renderer, &WindowWidth, &WindowHeight))
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+        SDL_Quit();
+        __builtin_abort();
+    }
+
+    int32 BackBufferWidth = WindowWidth;
+    int32 BackBufferHeight = WindowHeight;
+    SDL_Texture* BackBuffer = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, BackBufferWidth, BackBufferHeight);
+    if (!BackBuffer)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
         SDL_Quit();
@@ -159,11 +169,70 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
             }
         }
 
-        // Finalise Frame
-        SDL_SetRenderDrawColor(Renderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(Renderer);
+        //
+        // If the window has resized, we'll need to resize our backbuffer
+        //
 
+        if (!SDL_GetRenderOutputSize(Renderer, &WindowWidth, &WindowHeight))
+        {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+            SDL_Quit();
+            __builtin_abort();
+        }
+
+        if (WindowWidth != BackBufferWidth || WindowHeight != BackBufferHeight)
+        {
+            BackBufferWidth = WindowWidth;
+            BackBufferHeight = WindowHeight;
+
+            SDL_DestroyTexture(BackBuffer);
+            BackBuffer = SDL_CreateTexture(Renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, BackBufferWidth, BackBufferHeight);
+
+            if (!BackBuffer)
+            {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, ProgramName, SDL_GetError(), NULL);
+                SDL_Quit();
+                __builtin_abort();
+            }
+        }
+
+        void* BackBufferPixels;
+        int32 BackBufferPitch;
+        SDL_LockTexture(BackBuffer, NULL, &BackBufferPixels, &BackBufferPitch);
+
+        //
+        // Draw Frame
+        //
+
+        uint8* BackBufferRow = (uint8*)BackBufferPixels;
+        for (int32 Y = 0; Y < BackBufferHeight; ++Y)
+        {
+            for (int32 X = 0; X < BackBufferWidth; ++X)
+            {
+                uint8* Red = BackBufferRow + (4 * X);
+                uint8* Green = Red + 1;
+                uint8* Blue = Red + 2;
+                uint8* Alpha = Red + 3;
+
+                *Alpha = 255;
+                *Red = 0;
+                *Green = X % 256;
+                *Blue = Y % 256;
+            }
+            BackBufferRow += BackBufferPitch;
+        }
+
+        //
+        // Finalise Frame
+        //
+
+        SDL_UnlockTexture(BackBuffer);
+        SDL_RenderTexture(Renderer, BackBuffer, NULL, NULL);
         SDL_RenderPresent(Renderer);
+
+        //
+        // Update timing information
+        //
 
         int64 NewNanoseconds = SDL_GetTicksNS();
         int64 FrameDurationNanoseconds = NewNanoseconds - CurrentNanoseconds;
