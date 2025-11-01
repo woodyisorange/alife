@@ -1,2 +1,3 @@
-#include "game.cpp"
-#include "sdl3_platform.cpp"
+#include <game/game.cpp>
+#include <utility/string.cpp>
+#include <platform/sdl3_platform.cpp>

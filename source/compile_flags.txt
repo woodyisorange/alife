@@ -3,6 +3,7 @@
 -Wextra
 -Werror
 -fno-exceptions
+--include-directory=.
 --include-directory=../third-party/sdl-3.2.24/include
 --library-directory=../third-party/sdl-3.2.24/binaries/linux64
 -xc++

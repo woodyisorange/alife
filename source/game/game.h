@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include <platform/types.h>
 
 enum pixel_format
 {

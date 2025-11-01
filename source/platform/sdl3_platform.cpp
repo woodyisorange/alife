@@ -1,4 +1,5 @@
-#include "game.h"
+#include <game/game.h>
+#include <utility/common.h>
 
 #include <stdio.h>
 
@@ -11,36 +12,6 @@ struct
 {
     SDL_DateTime CurrentDateTime;
 } PlatformGlobals;
-
-#define INNER_AS_STRING(X) #X
-#define AS_STRING(X) INNER_AS_STRING(X)
-
-#define MAX(A, B) ((A) > (B) ? (A) : (B))
-
-#define ENSURE(Expression) \
-    { \
-        if (!(Expression)) \
-        { \
-            __builtin_debugtrap(); \
-            __builtin_abort(); \
-        } \
-    }
-
-int64 FormatString(char8* Destination, int64 DestinationSize, const char8* Format, ...)
-{
-    if (Destination == NULL || DestinationSize <= 0)
-    {
-        return 0;
-    }
-
-    va_list Arguments;
-    va_start(Arguments, Format);
-
-    int32 Length = vsprintf(Destination, Format, Arguments);
-
-    ENSURE(Length >= 0 && Length <= DestinationSize);
-    return Length;
-}
 
 #define LOG_MESSAGE(Format, ...) \
 { \
@@ -56,12 +27,6 @@ int64 FormatString(char8* Destination, int64 DestinationSize, const char8* Forma
         __VA_OPT__(,) __VA_ARGS__); \
 }
 
-int32 StringCompare(const char* StringA, const char* StringB)
-{
-    ENSURE(StringA != NULL && StringB != NULL);
-    return __builtin_strcmp(StringA, StringB);
-}
-
 int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
 {
     SDL_Time CurrentTime;
@@ -74,13 +39,13 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
     // Parse Commandline
     //
 
-    bool8 WindowFullscreen = true;
+    bool8 WindowFullscreen = false;
 
     for (int32 Index = 0; Index < ArgumentCount; ++Index)
     {
-        if (StringCompare("-windowed", ArgumentValues[Index]) == 0)
+        if (StringCompare("-fullscreen", ArgumentValues[Index]) == 0)
         {
-            WindowFullscreen = false;
+            WindowFullscreen = true;
         }
         else
         {
@@ -224,7 +189,7 @@ int32 main(int32 ArgumentCount, const char8* ArgumentValues[])
         int64 FrameDurationNanoseconds = NewNanoseconds - CurrentNanoseconds;
         CurrentNanoseconds = NewNanoseconds;
 
-        int64 TotalFrameDurationNanoseconds = MAX(FrameDurationNanoseconds, TargetFrameDurationNanoseconds);
+        int64 TotalFrameDurationNanoseconds = Max(FrameDurationNanoseconds, TargetFrameDurationNanoseconds);
 
         float32 FrameDurationMilliseconds = (float32)FrameDurationNanoseconds / 1000000.0f;
         float32 TotalFrameDurationMilliseconds = (float32)TotalFrameDurationNanoseconds / 1000000.0f;
