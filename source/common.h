@@ -1,9 +1,5 @@
 #pragma once
 
-#define NULL 0
-
-#define static_assert _Static_assert
-
 #include <stdint.h>
 
 typedef bool bool8;
