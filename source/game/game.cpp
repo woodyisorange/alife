@@ -25,13 +25,13 @@ void Game_SetPixel(bitmap* BackBuffer, rgba32 Colour, int32 X, int32 Y)
     }
 }
 
-void Game_DrawLine(bitmap* BackBuffer, rgba32 Colour, vector2 Start, vector2 End)
+void Game_DrawDeviceSpaceLine(bitmap* BackBuffer, rgba32 Colour, vector3 Start, vector3 End)
 {
-    vector2 Line = End - Start;
+    vector2 Line = MakeVector2(End - Start);
     float32 LineLength = Length(Line);
     vector2 Step = (LineLength > 0.0f) ? (Line / LineLength) : Line;
 
-    vector2 Point = Start;
+    vector2 Point = MakeVector2(Start);
     for (int32 Steps = LineLength; Steps >= 0; --Steps)
     {
         Game_SetPixel(BackBuffer, Colour, Point.X, Point.Y);
@@ -39,18 +39,18 @@ void Game_DrawLine(bitmap* BackBuffer, rgba32 Colour, vector2 Start, vector2 End
     }
 }
 
-void Game_DrawTriangle(bitmap* BackBuffer, rgba32 Colour, vector2 A, vector2 B, vector2 C)
+void Game_DrawDeviceSpaceTriangle(bitmap* BackBuffer, rgba32 Colour, vector3 A, vector3 B, vector3 C)
 {
-    Game_DrawLine(BackBuffer, Colour, A, B);
-    Game_DrawLine(BackBuffer, Colour, B, C);
-    Game_DrawLine(BackBuffer, Colour, C, A);
+    Game_DrawDeviceSpaceLine(BackBuffer, Colour, A, B);
+    Game_DrawDeviceSpaceLine(BackBuffer, Colour, B, C);
+    Game_DrawDeviceSpaceLine(BackBuffer, Colour, C, A);
 }
 
-void Game_FillTriangle(bitmap* BackBuffer, rgba32 Colour, vector2 A, vector2 B, vector2 C)
+void Game_FillDeviceSpaceTriangle(bitmap* BackBuffer, rgba32 Colour, vector3 A, vector3 B, vector3 C)
 {
-    vector3 AToB = Vector3(B - A, 0.0f);
-    vector3 AToC = Vector3(C - A, 0.0f);
-    vector3 BToC = Vector3(C - B, 0.0f);
+    vector3 AToB = B - A;
+    vector3 AToC = C - A;
+    vector3 BToC = C - B;
 
     int32 MinX = (int32)Min(A.X, B.X, C.X);
     MinX = Clamp(MinX, 0, BackBuffer->Width);
@@ -68,13 +68,15 @@ void Game_FillTriangle(bitmap* BackBuffer, rgba32 Colour, vector2 A, vector2 B, 
     {
         for (int32 X = MinX; X < MaxX; ++X)
         {
-            vector2 Point = { (float32)X, (float32)Y };
-            vector3 AToPoint = Vector3(Point - A, 0.0f);
-            vector3 BToPoint = Vector3(Point - A, 0.0f);
+            // Test center of pixel
+            vector3 Point = { (float32)X + 0.5f, (float32)Y + 0.5f, 0.0f };
+
+            vector3 AToPoint = Point - A;
+            vector3 BToPoint = Point - B;
 
             bool8 InsideAToB = Cross(AToB, AToPoint).Z >= 0.0f;
             bool8 InsideAToC = Cross(AToC, AToPoint).Z <= 0.0f;
-            bool8 InsideBToC = Cross(BToC, BToPoint).Z <= 0.0f;
+            bool8 InsideBToC = Cross(BToC, BToPoint).Z >= 0.0f;
 
             bool8 InsideTriangle = InsideAToB && InsideAToC && InsideBToC;
             if (InsideTriangle)
@@ -84,6 +86,15 @@ void Game_FillTriangle(bitmap* BackBuffer, rgba32 Colour, vector2 A, vector2 B, 
             }
         }
     }
+}
+
+vector3 Game_ClipSpaceToDeviceSpace(bitmap* BackBuffer, vector3 Point)
+{
+    vector3 DeviceSpacePoint;
+    DeviceSpacePoint.X = BackBuffer->Width * (Point.X + 0.5f);
+    DeviceSpacePoint.Y = BackBuffer->Height * (1.0f - (Point.Z + 0.5f));
+    DeviceSpacePoint.Z = 0.0f;
+    return DeviceSpacePoint;
 }
 
 void Game_UpdateAndRender(bitmap* BackBuffer)
@@ -106,14 +117,19 @@ void Game_UpdateAndRender(bitmap* BackBuffer)
         BackBufferRow += BackBuffer->Pitch;
     }
 
-    vector2 A = { BackBuffer->Width * 0.5f, BackBuffer->Height * 0.25f };
-    vector2 B = { BackBuffer->Width * 0.75f, BackBuffer->Height * 0.75f };
-    vector2 C = { BackBuffer->Width * 0.25f, BackBuffer->Height * 0.75f };
+    // Left-handed, +X=Right, +Y=Forward, +Z=Up
+    vector3 A = {  0.00f,  0.00f,  0.25f };
+    vector3 B = {  0.25f,  0.00f, -0.25f };
+    vector3 C = { -0.25f,  0.00f,  0.00f };
+
+    vector3 DeviceSpaceA = Game_ClipSpaceToDeviceSpace(BackBuffer, A);
+    vector3 DeviceSpaceB = Game_ClipSpaceToDeviceSpace(BackBuffer, B);
+    vector3 DeviceSpaceC = Game_ClipSpaceToDeviceSpace(BackBuffer, C);
 
     rgba32 Red  = { 255, 0, 0, 255 };
     rgba32 Blue  = { 0, 0, 255, 255 };
 
-    Game_FillTriangle(BackBuffer, Blue, A, B, C);
-    Game_DrawTriangle(BackBuffer, Red, A, B, C);
+    Game_FillDeviceSpaceTriangle(BackBuffer, Blue, DeviceSpaceA, DeviceSpaceB, DeviceSpaceC);
+    Game_DrawDeviceSpaceTriangle(BackBuffer, Red, DeviceSpaceA, DeviceSpaceB, DeviceSpaceC);
 }
 

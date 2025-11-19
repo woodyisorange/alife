@@ -3,6 +3,8 @@
 #include <utility/string.h>
 #include <utility/math.h>
 
+constexpr float32 EPSILON = 0.000001;
+
 struct vector2
 {
     float32 X;
@@ -135,10 +137,9 @@ inline float32 Length(vector2 A)
 
 inline bool8 IsNearlyZero(vector2 A)
 {
-    constexpr float32 Epsilon = 0.000001;
     for (int32 Index = 0; Index < 2; ++Index)
     {
-        if (A[Index] > Epsilon || A[Index] < -Epsilon)
+        if (A[Index] > EPSILON || A[Index] < -EPSILON)
         {
             return false;
         }
@@ -288,10 +289,9 @@ inline float32 Length(vector3 A)
 
 inline bool8 IsNearlyZero(vector3 A)
 {
-    constexpr float32 Epsilon = 0.000001;
     for (int32 Index = 0; Index < 3; ++Index)
     {
-        if (A[Index] > Epsilon || A[Index] < -Epsilon)
+        if (A[Index] > EPSILON || A[Index] < -EPSILON)
         {
             return false;
         }
@@ -433,10 +433,9 @@ inline float32 Length(vector4 A)
 
 inline bool8 IsNearlyZero(vector4 A)
 {
-    constexpr float32 Epsilon = 0.000001;
     for (int32 Index = 0; Index < 4; ++Index)
     {
-        if (A[Index] > Epsilon || A[Index] < -Epsilon)
+        if (A[Index] > EPSILON || A[Index] < -EPSILON)
         {
             return false;
         }
@@ -444,7 +443,7 @@ inline bool8 IsNearlyZero(vector4 A)
     return true;
 }
 
-inline vector2 Vector2(vector3 Other)
+inline vector2 MakeVector2(vector3 Other)
 {
     vector2 Result;
     Result.X = Other.X;
@@ -452,7 +451,7 @@ inline vector2 Vector2(vector3 Other)
     return Result;
 }
 
-inline vector2 Vector2(vector4 Other)
+inline vector2 MakeVector2(vector4 Other)
 {
     vector2 Result;
     Result.X = Other.X;
@@ -460,7 +459,7 @@ inline vector2 Vector2(vector4 Other)
     return Result;
 }
 
-inline vector3 Vector3(vector2 Other, float32 Z)
+inline vector3 MakeVector3(vector2 Other, float32 Z)
 {
     vector3 Result;
     Result.X = Other.X;
@@ -469,7 +468,7 @@ inline vector3 Vector3(vector2 Other, float32 Z)
     return Result;
 }
 
-inline vector3 Vector3(vector4 Other)
+inline vector3 MakeVector3(vector4 Other)
 {
     vector3 Result;
     Result.X = Other.X;
@@ -478,7 +477,7 @@ inline vector3 Vector3(vector4 Other)
     return Result;
 }
 
-inline vector4 Vector4(vector2 Other, float32 Z, float32 W)
+inline vector4 MakeVector4(vector2 Other, float32 Z, float32 W)
 {
     vector4 Result;
     Result.X = Other.X;
@@ -488,7 +487,7 @@ inline vector4 Vector4(vector2 Other, float32 Z, float32 W)
     return Result;
 }
 
-inline vector4 Vector4(vector3 Other, float32 W)
+inline vector4 MakeVector4(vector3 Other, float32 W)
 {
     vector4 Result;
     Result.X = Other.X;
