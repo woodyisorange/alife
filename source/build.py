@@ -7,7 +7,7 @@ compiler = ["clang++"]
 debug_compile_flags = ["-g"]
 release_compile_flags = ["-O3"]
 extra_compile_flags = [] # loaded from compile_flags.txt
-compile_arguments = ["-o", f"{output_path}/tactile.elf", "unity.cpp"]
+compile_arguments = ["-o", f"{output_path}/alife.elf", "unity.cpp"]
 link_arguments = ["-lm", "-lSDL3"]
 
 args_parser = argparse.ArgumentParser()
